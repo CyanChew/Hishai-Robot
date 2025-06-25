@@ -140,4 +140,4 @@ dependencies:
       - tyro==0.9.22
       - urllib3==2.4.0
       - wcwidth==0.2.13
-prefix: /home/luka/anaconda3/envs/hirobot
+
