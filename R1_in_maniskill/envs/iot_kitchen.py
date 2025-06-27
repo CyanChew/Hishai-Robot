@@ -34,14 +34,17 @@ except ImportError:
 @register_env("IoTKitchen-v0", max_episode_steps=1000)
 class IoTKitchenEnv(BaseEnv):
     SUPPORTED_ROBOTS = ["my_R1"]
+    CONTROL_MODES = ["manual_joint_position"]##6.27东
 
     def __init__(self, *args, robot_uids="my_R1", **kwargs):
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
     def _load_agent(self, options: dict):
         # 机器人出生在高位置
-        spawn_pose = sapien.Pose([10, 0, 1.0], [1, 0, 0, 0])  # 1米高
+        spawn_pose = sapien.Pose([-1.5, -1.5, 0.05], [1, 0, 0, 0])  # 1米高
         super()._load_agent(options, spawn_pose)
+        for _ in range(10):
+            self.scene.step()
 
         
     def _load_scene(self, options: dict):
@@ -227,16 +230,16 @@ class IoTKitchenEnv(BaseEnv):
         )
         b_stove.build_static(name="stove")
 
-        # 中央餐桌：1.6m × 1.6m × 0.08m
-        table_half = [0.8, 0.8, 0.04]
-        b_table = self.scene.create_actor_builder()
-        b_table.add_box_collision(half_size=table_half)
-        b_table.add_box_visual(
-            half_size=table_half,
-            material=sapien.render.RenderMaterial(base_color=[0.55, 0.35, 0.2, 1]),
-        )
-        b_table.initial_pose = sapien.Pose([0, -1.0, 0.7 + table_half[2]], quat_I)
-        b_table.build_static(name="dining_table")
+        # # 中央餐桌：1.6m × 1.6m × 0.08m
+        # table_half = [0.8, 0.8, 0.04]
+        # b_table = self.scene.create_actor_builder()
+        # b_table.add_box_collision(half_size=table_half)
+        # b_table.add_box_visual(
+        #     half_size=table_half,
+        #     material=sapien.render.RenderMaterial(base_color=[0.55, 0.35, 0.2, 1]),
+        # )
+        # b_table.initial_pose = sapien.Pose([0, -1.0, 0.7 + table_half[2]], quat_I)
+        # b_table.build_static(name="dining_table")
 
         # ——— (2) 下载 & 加载 PartNet-Mobility 三层抽屉模型 ——— #
 
@@ -420,6 +423,19 @@ class IoTKitchenEnv(BaseEnv):
                 if idx < len(model_configs):
                     config = model_configs[idx]
                     art.set_pose(sapien.Pose(config["position"], config["rotation"]))
+    #6.27东
+    def step(self, action):
+        assert self.control_mode == "manual_joint_position"
+        self.agent.set_qpos_from_action(action)  # 自定义关节控制接口
+        self.scene.step()
+        for link in self.agent.get_links():
+            lin_v = link.linear_velocity
+            ang_v = link.angular_velocity
+            print(lin_v,"," ,ang_v)
+            if np.linalg.norm(lin_v) > 5 or np.linalg.norm(ang_v) > 5:
+                 print(f"⚠️ {link.get_name()} has excessive velocity!")
+       # self._update_obs()
+        return self.get_obs(), self.evaluate(), False, False, {}
     def evaluate(self) -> dict:
         # 没有成功条件，始终返回 False
         return {"success": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)}

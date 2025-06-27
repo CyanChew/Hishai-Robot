@@ -3,7 +3,19 @@
 import sapien.core as sapien
 from mani_skill.envs.sapien_env import BaseEnv
 from mani_skill.utils.registration import register_env
-
+import numpy as np
+# —— 兼容不同版本的 ManiSkill BaseEnv、register_env —— #
+try:
+    from mani_skill3.envs.sapien_env import BaseEnv
+    from mani_skill3.utils.registration import register_env
+except ImportError:
+    try:
+        from mani_skill.envs.sapien_env import BaseEnv
+        from mani_skill.utils.registration import register_env
+    except ImportError:
+        from mani_skill.envs.build_env import SapienEnv as BaseEnv
+        from mani_skill.utils.registration import register_env
+# —— 兼容导入结束 —— #
 
 @register_env("EmptyGroundR1-v0", max_episode_steps=1000)
 class EmptyGroundR1Env(BaseEnv):
@@ -15,13 +27,13 @@ class EmptyGroundR1Env(BaseEnv):
 
     def _load_agent(self, options: dict):
         # 出生高度略高于地面，避免初始穿插
-        spawn_pose = sapien.Pose([0, 0, 0.02], [1, 0, 0, 0])
+        spawn_pose = sapien.Pose([0, 0, 0.3], [1, 0, 0, 0])
         super()._load_agent(options, spawn_pose)
 
     def _load_scene(self, options: dict):
         self.scene.set_ambient_light([0.5, 0.5, 0.5])
         self.scene.add_directional_light(direction=[1, -1, -1], color=[1, 1, 1])
-
+        self._scene.set_gravity([0, 0, -9.81])
         # 地面：4m × 4m × 0.01m
         floor_half = [2, 2, 0.005]
         builder = self.scene.create_actor_builder()
@@ -40,6 +52,13 @@ class EmptyGroundR1Env(BaseEnv):
     def step(self, action):
         assert self.control_mode == "manual_joint_position"
         self.agent.set_qpos_from_action(action)  # 自定义关节控制接口
+        self.scene.step()
+        for link in self.agent.get_links():
+            lin_v = link.linear_velocity
+            ang_v = link.angular_velocity
+            print(lin_v,"," ,ang_v)
+            if np.linalg.norm(lin_v) > 5 or np.linalg.norm(ang_v) > 5:
+                 print(f"⚠️ {link.get_name()} has excessive velocity!")
         #self.scene.step()
        # self._update_obs()
         return self.get_obs(), self.evaluate(), False, False, {}

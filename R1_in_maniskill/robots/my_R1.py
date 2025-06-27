@@ -94,16 +94,16 @@ class MyR1(BaseAgent):
         'right_gripper_finger_joint2'
     ]
     
-    torso_stiffness = 1e3
-    torso_damping = 1e2
+    torso_stiffness = 300##1e3
+    torso_damping = 20#1e2
     torso_force_limit = 100
 
-    arm_stiffness = 1e3
-    arm_damping = 1e2
+    arm_stiffness = 300
+    arm_damping = 20
     arm_force_limit = 100
 
-    gripper_stiffness = 1e3
-    gripper_damping = 1e2
+    gripper_stiffness = 300
+    gripper_damping = 20
     gripper_force_limit = 100
 
     @property
@@ -277,4 +277,6 @@ class MyR1(BaseAgent):
         qpos[0,21] = qpos[0,22] = action_dict["gripper"]["right"]
 
         self.robot.set_qpos(qpos)
+    def get_links(self):
+        return self.robot.get_links()
   

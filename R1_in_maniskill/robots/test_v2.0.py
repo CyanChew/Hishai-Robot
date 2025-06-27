@@ -31,13 +31,13 @@ def parse_args(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--robot-uid", type=str, default="my_R1")
     parser.add_argument("-c", "--control-mode", type=str, default="pd_joint_pos")
-    parser.add_argument("--sim-freq", type=int, default=100)
-    parser.add_argument("--control-freq", type=int, default=20)
+    parser.add_argument("--sim-freq", type=int, default=10)
+    parser.add_argument("--control-freq", type=int, default=10)
     parser.add_argument("-s", "--seed", type=int, default=None)
     return parser.parse_args(args)
 args = parse_args()
 env = gym.make(
-        "EmptyGroundR1-v0",
+        "EmptyGroundR1-v0",##EmptyGroundR1-v0    IoTKitchen-v0
         obs_mode="state_dict",
         reward_mode="none",
         render_mode="human",
@@ -77,7 +77,8 @@ def convert_to_maniskill_action(joylo_action):
     return {
         "left_arm": joylo_action["arm_cmd"]["left"],
         "right_arm": joylo_action["arm_cmd"]["right"],
-        "torso": joylo_action["torso_cmd"],
+        #"torso": joylo_action["torso_cmd"],
+        "torso": np.zeros(4),  # 这里需要根据实际情况调整，暂时置为零
         "gripper": {
             "left": joylo_action["gripper_cmd"]["left"],
             "right": joylo_action["gripper_cmd"]["right"]
@@ -85,14 +86,18 @@ def convert_to_maniskill_action(joylo_action):
     }
 
 # 主循环：按照 JoyLoController 控制手指行为
-from pprint import pprint
-pprint(obs["agent"])
+#以下两行代码查看obs["agent"]的内容
+# from pprint import pprint
+# pprint(obs["agent"])
 while True:
     # 读取 JoyCon + 机械臂状态，返回 action dict
+    #joycon 负责处理 torso、gripper、底盘的控制（通过摇杆和按钮获取指令）。
+    #joylo_arms 是 JoyLoArmPositionController，它自己管理着左右机械臂的状态，无需通过环境 obs 更新。
     joylo_action = joylo.act(curr_torso_q=obs["agent"]["qpos"][0][3:7].numpy())
 
     # 转化成 ManiSkill 要求的动作
     action = convert_to_maniskill_action(joylo_action)
+    print(action)
 
     # 步进一步
     obs, reward, done, truncated, info = env.step(action)
