@@ -25,10 +25,10 @@ import sys
 sys.path.append("/home/pine/R1_maniskill/R1_in_maniskill/envs/")  # 确保能找到 mani_skill 包
 sys.path.append("/home/pine/R1_maniskill/R1_in_maniskill/robots/")  # 确保能找到 robots 包
 # —— 先导入以完成“注册”动作 —— #
-from R1_in_maniskill.envs import iot_kitchen
+import iot_kitchen
 #import iot_kitchen
 import my_R1  # 确保 my_R1 已经恰当用 @register_agent() 注册
-
+import empty_ground_env
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--robot-uid", type=str, default="my_R1",
@@ -63,21 +63,29 @@ def main():
         np.random.seed(args.seed)
 
     # —— 创建 Gym 环境 —— #
+    # env = gym.make(
+    #     "IoTKitchen-v0",
+    #     obs_mode="none",               # 环境不主动返回 obs，直接用 render 画面
+    #     reward_mode="none",            # 不计算奖励
+    #     enable_shadow=True,
+    #     control_mode=args.control_mode,
+    #     robot_uids=args.robot_uid,
+    #     sensor_configs={"shader_pack": "default"},
+    #     human_render_camera_configs={"shader_pack": "default"},
+    #     viewer_camera_configs={"shader_pack": "default"},
+    #     render_mode="human",           # “人类”渲染，将返回一个 Viewer
+    #     sim_config={"sim_freq": args.sim_freq, "control_freq": args.control_freq},
+    #     sim_backend="auto",
+    # )
+    #创建空地环境
     env = gym.make(
-        "IoTKitchen-v0",
-        obs_mode="none",               # 环境不主动返回 obs，直接用 render 画面
-        reward_mode="none",            # 不计算奖励
-        enable_shadow=True,
-        control_mode=args.control_mode,
-        robot_uids=args.robot_uid,
-        sensor_configs={"shader_pack": "default"},
-        human_render_camera_configs={"shader_pack": "default"},
-        viewer_camera_configs={"shader_pack": "default"},
-        render_mode="human",           # “人类”渲染，将返回一个 Viewer
-        sim_config={"sim_freq": args.sim_freq, "control_freq": args.control_freq},
-        sim_backend="auto",
+    "EmptyGroundR1-v0",
+    obs_mode="none",
+    reward_mode="none",
+    render_mode="human",
+    control_mode="pd_joint_pos",
+    robot_uids="my_R1",
     )
-
     # reset 时会调用 IoTKitchenEnv._load_scene()、_load_agent()，
     # 先创建地面、墙、橱柜、灶台、餐桌，再实例化 my_R1
     env.reset(seed=args.seed or 0)
@@ -87,6 +95,9 @@ def main():
 
     print(f"已加载机器人：{args.robot_uid}，控制模式：{args.control_mode}")
     print("可用关键帧：", list(env.agent.keyframes.keys()))
+    qpos = env.agent.robot.get_qpos()
+    print("🤖 初始 qpos =", qpos)
+    print("🔢 qpos shape =", qpos.shape)
 
     # —— 如果有 keyframes，尝试初始化到某个关键帧 —— #
     kf = None
@@ -118,6 +129,7 @@ def main():
     viewer = env.render()
     viewer.paused = True
     viewer = env.render()
+
 
     # —— 交互主循环 —— #
     while True:

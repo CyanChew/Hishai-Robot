@@ -5,11 +5,12 @@ from mani_skill.agents.controllers import *
 from mani_skill.agents.registration import register_agent
 from mani_skill.sensors.camera import CameraConfig
 import os
-
+import torch
 @register_agent()
 class MyR1(BaseAgent):
     uid = "my_R1"
     # 获取当前脚本文件（如 my_R1.py）所在的目录
+    supported_control_modes = ["manual_joint_position", "pd_joint_pos", "pd_joint_delta_pos"]
     this_dir = os.path.dirname(__file__)
     # 拼接出相对路径
     urdf_path = os.path.join(this_dir, "R1", "urdf", "r1_v2_1_0.urdf")   
@@ -177,10 +178,11 @@ class MyR1(BaseAgent):
                 gripper=gripper_pd_joint_pos, 
                 base=base_pd_joint_vel,
             ),
+            manual_joint_position=dict(gripper=gripper_pd_joint_pos)
         )
         # Make a deepcopy in case users modify any config
         return deepcopy_dict(controller_configs)
-    
+
     @property
     def _sensor_configs(self):
         return [
@@ -248,3 +250,31 @@ class MyR1(BaseAgent):
     def _load_scene(self, options: dict):
     # ...
         self.ground.set_collision_group_bit(group=2, bit_idx=30, bit=1)
+    #####yudong6.28新添加
+    def set_qpos_from_action(self, action_dict):
+        assert set(action_dict.keys()) == {"torso", "left_arm", "right_arm", "gripper"}
+        """接收来自环境的完整动作字典并设置到各组件"""
+        qpos = self.robot.get_qpos()
+        if isinstance(qpos, torch.Tensor):
+             qpos = qpos.cpu().numpy().copy()
+        else:
+             qpos = np.array(qpos).copy()
+
+    # torso（4自由度）
+        torso_indices = [3, 4, 5, 6]
+        qpos[0,torso_indices] = action_dict["torso"]
+
+    # left_arm（7、9、11、13、15、17）
+        left_indices = [7, 9, 11, 13, 15, 17]
+        qpos[0,left_indices] = action_dict["left_arm"]
+
+    # right_arm（8、10、12、14、16、18）
+        right_indices = [8, 10, 12, 14, 16, 18]
+        qpos[0,right_indices] = action_dict["right_arm"]
+
+    # gripper（19~22）
+        qpos[0,19] = qpos[0,20] = action_dict["gripper"]["left"]
+        qpos[0,21] = qpos[0,22] = action_dict["gripper"]["right"]
+
+        self.robot.set_qpos(qpos)
+  

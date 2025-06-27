@@ -70,38 +70,38 @@ class IoTKitchenEnv(BaseEnv):
         
         # 中央餐桌：1.4m × 1.0m × 0.03m，高度0.8m
         # 餐桌桌面
-        table_half = [0.7, 0.5, 0.015]
+        # table_half = [0.7, 0.5, 0.015]
 
-        # 餐桌四条腿
-        leg_half = [0.03, 0.03, 0.4]  # 桌腿尺寸：6cm x 6cm x 80cm
-        leg_positions = [
-            [0.65, -0.8, 0.4],   # 右前
-            [0.65, 0, 0.4],    # 右后
-            [-0.65, -0.8, 0.4],  # 左前
-            [-0.65, 0, 0.4]    # 左后
-        ]
+        # # 餐桌四条腿
+        # leg_half = [0.03, 0.03, 0.4]  # 桌腿尺寸：6cm x 6cm x 80cm
+        # leg_positions = [
+        #     [0.65, -0.8, 0.4],   # 右前
+        #     [0.65, 0, 0.4],    # 右后
+        #     [-0.65, -0.8, 0.4],  # 左前
+        #     [-0.65, 0, 0.4]    # 左后
+        # ]
 
-        # 先创建桌腿
-        for i, pos in enumerate(leg_positions):
-            b_leg = self.scene.create_actor_builder()
-            b_leg.add_box_collision(half_size=leg_half)
-            b_leg.add_box_visual(
-                half_size=leg_half,
-                material=sapien.render.RenderMaterial(base_color=[0.55, 0.35, 0.2, 1]),
-            )
-            b_leg.initial_pose = sapien.Pose(pos, quat_I)
-            b_leg.build_static(name=f"table_leg_{i}")
+        # # 先创建桌腿
+        # for i, pos in enumerate(leg_positions):
+        #     b_leg = self.scene.create_actor_builder()
+        #     b_leg.add_box_collision(half_size=leg_half)
+        #     b_leg.add_box_visual(
+        #         half_size=leg_half,
+        #         material=sapien.render.RenderMaterial(base_color=[0.55, 0.35, 0.2, 1]),
+        #     )
+        #     b_leg.initial_pose = sapien.Pose(pos, quat_I)
+        #     b_leg.build_static(name=f"table_leg_{i}")
 
-        # 再创建桌面
-        b_table = self.scene.create_actor_builder()
-        b_table.add_box_collision(half_size=table_half)
-        b_table.add_box_visual(
-            half_size=table_half,
-            material=sapien.render.RenderMaterial(base_color=[0.55, 0.35, 0.2, 1]),
-        )
-        b_table.initial_pose = sapien.Pose([0, -0.4, 0.8 - table_half[2]], quat_I)
-        b_table.build_static(name="dining_table")
-            # 中央餐桌：1.6m × 1.6m × 0.08m，高度0.8m
+        # # 再创建桌面
+        # b_table = self.scene.create_actor_builder()
+        # b_table.add_box_collision(half_size=table_half)
+        # b_table.add_box_visual(
+        #     half_size=table_half,
+        #     material=sapien.render.RenderMaterial(base_color=[0.55, 0.35, 0.2, 1]),
+        # )
+        # b_table.initial_pose = sapien.Pose([0, -0.4, 0.8 - table_half[2]], quat_I)
+        # b_table.build_static(name="dining_table")
+        #     # 中央餐桌：1.6m × 1.6m × 0.08m，高度0.8m
 
 
         # 围墙：高度 0.8m，厚度 0.05m
@@ -227,16 +227,16 @@ class IoTKitchenEnv(BaseEnv):
         )
         b_stove.build_static(name="stove")
 
-        # # 中央餐桌：1.6m × 1.6m × 0.08m
-        # table_half = [0.8, 0.8, 0.04]
-        # b_table = self.scene.create_actor_builder()
-        # b_table.add_box_collision(half_size=table_half)
-        # b_table.add_box_visual(
-        #     half_size=table_half,
-        #     material=sapien.render.RenderMaterial(base_color=[0.55, 0.35, 0.2, 1]),
-        # )
-        # b_table.initial_pose = sapien.Pose([0, -1.0, 0.7 + table_half[2]], quat_I)
-        # b_table.build_static(name="dining_table")
+        # 中央餐桌：1.6m × 1.6m × 0.08m
+        table_half = [0.8, 0.8, 0.04]
+        b_table = self.scene.create_actor_builder()
+        b_table.add_box_collision(half_size=table_half)
+        b_table.add_box_visual(
+            half_size=table_half,
+            material=sapien.render.RenderMaterial(base_color=[0.55, 0.35, 0.2, 1]),
+        )
+        b_table.initial_pose = sapien.Pose([0, -1.0, 0.7 + table_half[2]], quat_I)
+        b_table.build_static(name="dining_table")
 
         # ——— (2) 下载 & 加载 PartNet-Mobility 三层抽屉模型 ——— #
 
